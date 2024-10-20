@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>Socket.IO chat</title>
+    <style>
+        body {
+            margin: 0;
+            padding-bottom: 3rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        #form {
+            background: rgba(0, 0, 0, 0.15);
+            padding: 0.25rem;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            height: 3rem;
+            box-sizing: border-box;
+            backdrop-filter: blur(10px);
+        }
+
+        #input {
+            border: none;
+            padding: 0 1rem;
+            flex-grow: 1;
+            border-radius: 2rem;
+            margin: 0.25rem;
+        }
+
+        #input:focus {
+            outline: none;
+        }
+
+        #form>button {
+            background: #333;
+            border: none;
+            padding: 0 1rem;
+            margin: 0.25rem;
+            border-radius: 3px;
+            outline: none;
+            color: #fff;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages>li {
+            padding: 0.5rem 1rem;
+        }
+
+        #messages>li:nth-child(odd) {
+            background: #efefef;
+        }
+
+        #register {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <ul id="messages"></ul>
+    <div id="users"></div>
+    <form id="form" action="">
+        <input id="input-id" autocomplete="off" placeholder="userId"/><button>Send</button>
+        <input id="input" autocomplete="off" placeholder="text"/>
+    </form>
+
+    <form id="login" action="">
+        <input id="input-login" autocomplete="off" placeholder="login" />
+        <input id="input-password" autocomplete="off" placeholder="password" />
+        <button type="submit">Login</button>
+    </form>
+
+    <form id="register" action="">
+        <input id="input-rid" autocomplete="off" placeholder="id" />
+        <input id="input-fullName" autocomplete="off" placeholder="full name" />
+        <input id="input-rlogin" autocomplete="off" placeholder="login" />
+        <input id="input-rpassword" autocomplete="off" placeholder="password" />
+        <button type="submit">Register</button>
+    </form>
+
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script>
+        const socket = io('http://localhost:8000');
+
+        const form = document.getElementById('form');
+        const loginForm = document.getElementById('login')
+        const register = document.getElementById('register')
+        const input = document.getElementById('input');
+        const inputLogine = document.getElementById('input-login');
+        const inputPassword = document.getElementById('input-password');
+        const inputUserId = document.getElementById('input-id');
+        const inputrId = document.getElementById('input-rid')
+        const inputrFname = document.getElementById('input-fullName')
+        const inputrLogin = document.getElementById('input-rlogin')
+        const inputrPassword = document.getElementById('input-rpassword')
+        const messages = document.getElementById('messages');
+        const users = document.getElementById('users');
+
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (input.value) {
+                socket.emit('send-message', {userId:inputUserId.value, data: input.value});
+                input.value = '';
+                inputUserId.value = '';
+            }
+            // else if(input.value && !inputUserId.value){
+            //     socket.emit('sendAll', {data: input.value});
+            //     input.value = '';
+            // }
+        });
+
+        login.addEventListener('submit', (e)=>{
+            e.preventDefault();
+            if(inputLogine.value && inputPassword.value){
+                socket.emit('login', {login: inputLogine.value, password: inputPassword.value});
+            }
+        });
+
+        register.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (inputrId.value && inputrFname.value && inputrLogin.value && inputrPassword.value) {
+                    socket.emit('register', { id: inputrId.value, fullName: inputrFname.value, login: inputrLogin.value, password: inputrPassword.value });
+                }
+            });
+
+        socket.on('new-message', (data) => {
+
+            const item = document.createElement('li');
+            item.textContent = data;
+            messages.appendChild(item);
+            window.scrollTo(0, document.body.scrollHeight);
+        });
+
+        socket.on('online-users', ({onlineUsers}) => {
+            users.innerHTML = '';
+            const userOl = document.createElement("ol");
+            for (let i = 0; i < onlineUsers.length; i++) {
+                const user = onlineUsers[i];
+
+                const item = document.createElement('li');
+                item.textContent = `${user.id} - ${user.login}`;
+                userOl.appendChild(item);
+                window.scrollTo(0, document.body.scrollHeight);
+            }
+            users.append(userOl);
+        })
+    </script>
+</body>
+
+</html>
